@@ -70,7 +70,7 @@ class Calibration:
 
     def undistort_img(self, img):
         """Undistorting image function"""
-        print(self.mtx)
+        if DEBUG: print(self.mtx)
         undist_img = cv2.undistort(img, self.mtx, self.dist, None, self.mtx)
         if DEBUG:
             f, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 8))

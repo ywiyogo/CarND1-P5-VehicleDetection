@@ -1,0 +1,5 @@
+*.p
+*.pyc
+
+p5_vehicles/
+p5_non-vehicles/

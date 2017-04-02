@@ -11,8 +11,12 @@ from skimage.feature import hog
 
 DEBUG = 1
 
+def visualize_img(img, title, cmap):
+    fig = plt.figure()
+    plt.imshow(img)
+    plt.show()
 
-def visualize_img(imglist, titlelist, cmaplist):
+def visualize_imgs(imglist, titlelist, cmaplist):
     """Visualize list of image"""
     if DEBUG:
         rows = int(len(imglist) / 2) + (len(imglist) % 2 > 0)
@@ -69,7 +73,7 @@ def s_channel_thresholding(img, thresh_min=170, thresh_max=255):
     return s_channel, binary_s
 
 
-def sobel_color_threshold(img, orient='x', thresh_min=25, thresh_max=100):
+def sobel_color_threshold(img, orient='x', thresh_min=25, thresh_max=100, debug=False):
     """Perform binary thresholding based on Sobel operator and S channel"""
     # Convert to grayscale
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -105,7 +109,7 @@ def sobel_color_threshold(img, orient='x', thresh_min=25, thresh_max=100):
     combine_binary = np.dstack(
         (np.zeros_like(color_thres), color_thres, color_thres))
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS).astype(np.float)
-    visualize_img((img, hls, s_channel, color_thres, binary_s, combine_binary),
+    if debug: visualize_imgs((img, hls, s_channel, color_thres, binary_s, combine_binary),
                   ("RGB", "hls", "s_channel", "color_thres",
                    "binary_s", "combine_binary"),
                   (0, 0, 0, 1, 1, 1))
@@ -129,3 +133,40 @@ def convert_rgb_to(rgbimg, cspace):
     elif cspace == 'LUV':
         img = cv2.cvtColor(rgbimg, cv2.COLOR_RGB2YCrCb)
     return img
+
+
+def show_histogram(data, title="Histogram of the datasets"):
+    """
+    Plotting histogram
+    """
+    fig_hist = plt.figure(figsize=(15, 8))
+    ax = fig_hist.add_subplot(111)
+    ax.hist(data, rwidth=0.1, align="mid", zorder=3)
+    ax.yaxis.grid(True, linestyle='--', zorder=0)
+    ax.set_ylabel('Occurrences')
+    ax.set_xlabel('Value')
+    ax.set_title(title)
+    plt.show()
+
+def show_barplot(data, title="Features"):
+    fig = plt.figure()
+    if (isinstance(data, np.ndarray)):
+        ind= np.arange(data.shape[0])
+        print(ind)
+        print(data)
+        plt.title(title)
+        # plt.ylim(min(data),max(data))
+        plt.bar(ind, data)
+
+    else:
+        ind= np.arange(data[0].shape[0])
+        plt.title("Features")
+        axis=[]
+        legends=title
+        for i, arr in enumerate(data):
+            ax = plt.bar(ind, arr)
+            axis.append(ax)
+        plt.legend(axis,legends)
+
+    plt.show()
+
