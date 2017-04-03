@@ -107,7 +107,7 @@ class VehicleFinder:
         """Draw all car bbox on the image"""
         font = cv2.FONT_HERSHEY_SIMPLEX
         for car in list(self.cars.values()):
-            print("Draw car: carID: ", car.carID, " ",car.tracked_count, " ", car.frame_update_count)
+            print("Draw car: carID: ", car.carID, " ",car.tracked_count, " ", car.noupdate_count)
             if car.tracked_count > 0:
                 cv2.rectangle(img, car.bbox[0], car.bbox[1], (0, 0, 255), 6)
                 cv2.putText(img, str("car " + str(car.carID)),
@@ -138,27 +138,28 @@ class VehicleFinder:
             bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
 
             # Ignore very narrow heat regions that less than  pixels
-            # width = np.max(nonzerox) - np.min(nonzerox)
-            # minwidth = 4
-            # minwidth1 = 55
-            # #print("Width pixel: ", width)
-            # det = False if width < minwidth1 and np.max(nonzeroy) > 500 else True
-            # if width > minwidth and det:
-            found = False
-            for car in list(self.cars.values()):
-                if car.check_bbox(bbox):
-                    car.update_state(bbox)
-                    found = True
-                    break
-            if not found:
-                car_id = 0
-                for i in range(1, len(self.cars) + 2):
-                    if not (i in self.cars.keys()):
-                        car_id = i
+
+            width = np.max(nonzerox) - np.min(nonzerox)
+            minwidth = 45
+            minwidth1 = 55
+            # and ignore small box for near objects (y-axis > 500)
+            det = False if width < minwidth1 and np.max(nonzeroy) > 500 else True
+            if width > minwidth and det:
+                found = False
+                for car in list(self.cars.values()):
+                    if car.check_bbox(bbox):
+                        car.update_state(bbox)
+                        found = True
                         break
-                print("Create a new car: ", car_id)
-                newcar = Car(car_id, bbox)
-                self.cars[car_id] = newcar
+                if not found:
+                    car_id = 0
+                    for i in range(1, len(self.cars) + 2):
+                        if not (i in self.cars.keys()):
+                            car_id = i
+                            break
+                    print("Create a new car: ", car_id)
+                    newcar = Car(car_id, bbox)
+                    self.cars[car_id] = newcar
 
     def search_windows(self, img, windows, clf, scaler):
         """Define a function you will pass an image

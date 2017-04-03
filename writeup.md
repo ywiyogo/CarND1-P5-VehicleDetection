@@ -15,14 +15,14 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+[image1]: ./examples/
+[image2]: ./examples/
+[image3]: ./examples/
+[image4]: ./examples/
+[image5]: ./examples/
+[image6]: ./examples/
+[image7]: ./examples/
+[video1]: ./project_video_result.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
 Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -40,6 +40,13 @@ This project needs these Python files:
 5. *lesson_functions.py*
 
 ### Histogram of Oriented Gradients (HOG)
+
+
+|Test | setse |
+|--|--|
+|arwaf| * etsete 
+        * seftsef|
+        * esse  |
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
@@ -63,7 +70,9 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters. I set the parameters as:
+First, I tried the RGB color channel and the parameter values from the lecture. Tuning the orientation parameter does not return different detection result as I expected. A higher value of the orientation causes longer feature vector. Thus, tuning this parameter to higher value is irrelevant. The same situation happens also for the parameter `histbins`.
+
+However, after my experiments the color space HSV can better detect the white car. The extracted features contains  spatial feature, the color histogram, and three channel of the HOG features. I set the parameters as:
 
     self.orient = 8
     self.spatial = 32

@@ -14,13 +14,13 @@ class Car:
         self.bbox = bbox
         self.tracked_count = 0
         self.frame_update = True
-        self.frame_update_count = 1
+        self.noupdate_count = 0
 
     def update_state(self, new_bbox):
         """Updating car state. This function can be call max. once/frame"""
         centroid = self.calc_centroid(new_bbox)
         if not self.frame_update:
-            self.frame_update_count = self.frame_update_count + 1
+            self.noupdate_count = self.noupdate_count - 1
             self.frame_update = True
             if self.check_centroid(centroid):
                 avg_x_top = int(np.average([self.bbox[0][0], new_bbox[0][0]]))
@@ -42,11 +42,14 @@ class Car:
 
     def check_centroid(self, centroid):
         """Check the validity of the validity of the centroid to this object"""
-        diff_x = abs(self.centroid[0] - centroid[0])
-        diff_y = abs(self.centroid[1] - centroid[1])
-        distance = np.sqrt(diff_x**2 + diff_y**2)
-        thres = 50
-        return True if distance < thres else False
+        if centroid[0] > self.bbox[0][0] and centroid[0] < self.bbox[1][0] and centroid[1] > self.bbox[0][1] and centroid[1] < self.bbox[1][1]:
+            return True
+        else:
+            diff_x = abs(self.centroid[0] - centroid[0])
+            diff_y = abs(self.centroid[1] - centroid[1])
+            distance = np.sqrt(diff_x**2 + diff_y**2)
+            thres = 60
+            return True if distance < thres else False
 
     def calc_centroid(self, bbox):
         """Calculate the centroid given a bounding box"""
@@ -56,11 +59,11 @@ class Car:
     def check_update(self):
         """Check if a car can be eliminated or not. Call this function an the end of the pipeline"""
         if self.frame_update is False:
-            self.frame_update_count = self.frame_update_count - 1
+            self.noupdate_count = self.noupdate_count + 1
             self.tracked_count = self.tracked_count - 1
-            if self.frame_update_count > 0:
-                return True
-            else:
+            if self.noupdate_count > 1:
                 return False
+            else:
+                return True
         else:
             return True
