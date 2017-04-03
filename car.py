@@ -23,16 +23,18 @@ class Car:
             self.noupdate_count = self.noupdate_count - 1
             self.frame_update = True
             if self.check_centroid(centroid):
-                avg_x_top = int(np.average([self.bbox[0][0], new_bbox[0][0]]))
-                avg_y_top = int(np.average([self.bbox[0][1], new_bbox[0][1]]))
-                avg_x_bottom = int(np.average([self.bbox[1][0], new_bbox[1][0]]))
-                avg_y_bottom = int(np.average([self.bbox[1][1], new_bbox[1][1]]))
-                self.bbox = ((avg_x_top, avg_y_top), (avg_x_bottom, avg_y_bottom))
+                # avg_x_top = int(np.average([self.bbox[0][0], new_bbox[0][0]]))
+                # avg_y_top = int(np.average([self.bbox[0][1], new_bbox[0][1]]))
+                # avg_x_bottom = int(np.average([self.bbox[1][0], new_bbox[1][0]]))
+                # avg_y_bottom = int(np.average([self.bbox[1][1], new_bbox[1][1]]))
+                # self.bbox = ((avg_x_top, avg_y_top), (avg_x_bottom, avg_y_bottom))
+                self.bbox = new_bbox
                 self.tracked_count = self.tracked_count + 1
             return True
         else:
-            print("Update failed of car",self.carID)
-            self.tracked_count = self.tracked_count - 1
+            print("Update failed of car -> restart counter", self.carID)
+            self.tracked_count = 0
+            self.noupdate_count = 0
             return False
 
     def check_bbox(self, new_bbox):
@@ -56,12 +58,15 @@ class Car:
         return (int(np.average([bbox[0][0], bbox[1][0]])),
                 int(np.average([bbox[0][1], bbox[1][1]])))
 
-    def check_update(self):
-        """Check if a car can be eliminated or not. Call this function an the end of the pipeline"""
+    def is_valid(self):
+        """
+        Check if the existence of this car can be eliminated or not.
+        Call this function an the end of the pipeline
+        """
         if self.frame_update is False:
             self.noupdate_count = self.noupdate_count + 1
             self.tracked_count = self.tracked_count - 1
-            if self.noupdate_count > 1:
+            if self.noupdate_count > -1:
                 return False
             else:
                 return True

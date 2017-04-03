@@ -70,19 +70,48 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
-First, I tried the RGB color channel and the parameter values from the lecture. Tuning the orientation parameter does not return different detection result as I expected. A higher value of the orientation causes longer feature vector. Thus, tuning this parameter to higher value is irrelevant. The same situation happens also for the parameter `histbins`.
+First, I tried the RGB color channel for the feature extraction. I combine all the features from color feature spatial, color histogram and the HOG features. My start parameter values was defined as these:
 
-However, after my experiments the color space HSV can better detect the white car. The extracted features contains  spatial feature, the color histogram, and three channel of the HOG features. I set the parameters as:
+* HOG orientation: 8
+* HOG pixel/cell: 16
+* HOG cell/block: 2
+* Binned color feature spatial: 16
+* Color histogram bins: 16
 
-    self.orient = 8
-    self.spatial = 32
-    self.histbins = 32
-    self.cell_per_block = 2
-    self.pix_per_cell = 16
-    self.hog_channel = "ALL"
-    self.spatial_feat = True
-    self.hist_feat = True
-    self.hog_feat = True
+After run the C-Support Vector classifier, it returns 98.23% for the test accuracy. From this result, I changed only the color space and observing the results in order to get the best color space. The table below shows my experiment result with all datasets provided by Udacity (GTI and KITTI).
+
+|Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy|
+|--|--|--|--|--|--|--|--|
+|RGB|8|16|16|16|1680|98.23%|
+|HSV|8|16|16|16|1680|99.16%|
+|YCrCb|8|16|16|16|1680|98.99%|
+|YUV|8|16|16|16|1680|99.01%|
+
+The comparison places HSV and YUV as my favorite color spaces to be used, compared to RGB. I continued my experiment by tuning the other parameter values, and get these comparisons:
+
+|Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy|
+|--|--|--|--|--|--|--|--|
+|YUV|8|16|16|16|1680|99.01%|
+|YUV|8|16|16|8|5520|99.32%|
+|YUV|12|16|16|8|7872|99.47%|
+|YUV|8|32|32|8|7872|99.55%|
+|YUV|8|32|32|16|4032|99.13%|
+|HSV|8|32|32|16|4032|99.21%|
+|YUV|12|32|32|16|4464|99.52%|
+
+Based on the above table, HSV has the based accuracy. However, after I tried with the real test images. The feature extraction using HSV returns more false positive on the yellow lane rather than using YUV color space. Because of this reason I change my decision to set the color space to YUV.
+Finally, these are the fixed parameters that I use as:
+
+    def __init__(self, cspace="YUV"):
+        self.orient = 8
+        self.spatial = 32
+        self.histbins = 32
+        self.cell_per_block = 2
+        self.pix_per_cell = 16
+        self.hog_channel = "ALL"
+        self.spatial_feat = True
+        self.hist_feat = True
+        self.hog_feat = True
 
 With these parameters first I chose the color space YCrCb. However, after my experiments the color space HSV can better detect the white car. The extracted features contains  spatial feature, the color histogram, and three channel of the HOG features.
 
@@ -96,11 +125,15 @@ The test accuracy of the SVC is 99.1 %.
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-The sliding window function can be found in the file *lesson_functions.py*. This file contains support functions which has been discussed in the lecture. In the class VehicleFinder, I define the window scales and the overlap scales:
+The sliding window function can be found in the file *lesson_functions.py*. This file contains others support functions which has been discussed in the lecture. 
+In the class VehicleFinder, I define the window scales and the overlap scales:
 
     win_scales = [64, 96, 128]
     overlap = [0.75, 0.8, 0.8]
 
+Windows size more than 128 x 128 pixels returns a more broaded detection on the heatmap. As the result, we will often get a larger bounding box than the object size. 
+
+Using overlap between 0.7 and 0.8 creates a higher value of heatmap. This approach results more stability of the resulting bounding box.
 
 ![alt text][image3]
 
@@ -108,16 +141,12 @@ The sliding window function can be found in the file *lesson_functions.py*. This
 
 So the overal pipeline is implemented in the `run()` function of the `VehicleFinder` class.
 
-After defining the sliding windows, I pass the windows to the classfier in order to get the prediction and the confidence score. The confidence score helps filtering the false positive.
+After defining the sliding windows, I pass the windows to the classfier in order to get the prediction and the confidence score. Here are several optimization that I have done:
 
-1. Create an empty list to receive positive detection windows
-2. Iterate over all windows in the list
-3. Extract the test window from original image
-4. Extract features for that window using single_img_features()
-5. Scale extracted features to be fed to classifier
-6. Predict using your classifier
-7. If positive (prediction == 1 and confidence score is higer than 0.99) then save the window
-8. Return windows for positive detections
+1. utilize the confidence score function of the SVC and filter the score
+2. applying the previous bounding box from the last frame to the heatmap
+3. Apply a heatmap threshold of 1
+4. Create a car object for each vehicle detection
 
 ![alt text][image4]
 ---

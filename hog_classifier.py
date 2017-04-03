@@ -23,15 +23,15 @@ DEBUG = 1
 class HogClassifier:
     """HOG Classifier Class"""
 
-    def __init__(self, cspace):
+    def __init__(self, cspace="YUV"):
         """Constructor"""
         self.cars_features = None
         self.noncars_features = None
         self.scaled_features = None
         self.scaler_feat = None
         self.svc = None
-        self.cars_data = '../p5_vehicles/**/*.png'
-        self.noncars_data = '../p5_non-vehicles/**/*.png'
+        self.cars_data = 'p5_vehicles/**/*.png'
+        self.noncars_data = 'p5_non-vehicles/**/*.png'
         self.orient = 8
         self.spatial = 32
         self.histbins = 32
@@ -49,7 +49,9 @@ class HogClassifier:
         fname = "data_features.p"
         scaled_fname = "data_scaled.p"
         scaler_fname = "data_scaler.p"
-
+        print("HOG cspace: {}, orient: {}, spatial: {}, histbins: {}".format(
+            self.color_space, self.orient, self.spatial, self.histbins))
+        print("HOG pix/cell: {}".format(self.pix_per_cell))
         if isfile(fname):
             print("features data found")
             with open(fname, 'rb') as f:
@@ -107,7 +109,7 @@ class HogClassifier:
 
         if DEBUG:
             print("Type of feature datas: ", type(self.cars_features))
-            print("Type of feature data[0]: ", type(self.cars_features[0]), self.cars_features[0].shape, " ", self.cars_features[0][3072])
+            print("Type of feature data[0]: ", type(self.cars_features[0]), self.cars_features[0].shape, " ", self.cars_features[0][10])
             print("Type of scaler data: ", type(self.scaler_feat))
             print("Type of scaled data: ", type(self.scaled_features), self.cars_features[0].shape)
             #show_barplot([self.cars_features[0], self.noncars_features[0], self.scaler_feat.scale_], ["car","noncar","scaler"])
@@ -134,7 +136,7 @@ class HogClassifier:
 
             print('Using spatial binning of:', self.spatial, 'and',
                   self.histbins, 'histogram bins')
-            print('Feature vector length:', len(X_train[0]))
+            print('SVC Feature vector length:', len(X_train[0]))
             # Use a linear SVC
             self.svc = LinearSVC()
             # Check the training time for the SVC

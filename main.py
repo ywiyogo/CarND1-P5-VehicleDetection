@@ -80,20 +80,20 @@ def main():
     global veh_finder
     veh_finder = VehicleFinder()
     veh_finder.init_detection_algorithm("HOG")
-    #ffmpeg_extract_subclip("project_video.mp4", 37, 44, targetname="test2.mp4")
+    #ffmpeg_extract_subclip("project_video.mp4", 0, 4, targetname="test3.mp4")
     if 1:
-        # vidfilename = "test2.mp4"
-        # write_output = "test2_result.mp4"
-        vidfilename = "project_video.mp4"
-        write_output = "project_video_result.mp4"
+        vidfilename = "test3.mp4"
+        write_output = "test3_result.mp4"
+        # vidfilename = "project_video.mp4"
+        # write_output = "project_video_result.mp4"
         clip = VideoFileClip(vidfilename)
         proc_clip = clip.fl_image(process_image)
         proc_clip.write_videofile(write_output, audio=False)
     else:
         # Get image from video
         file = "./test_images/test"
-        for i in range(2,9):
-            filename = file+str(i)+".jpg"
+        for i in range(1, 9):
+            filename = file + str(i) + ".jpg"
             rgb_img = mpimg.imread(filename)
             veh_finder.run(rgb_img, debug=True)
             res_img = veh_finder.draw_cars(rgb_img)

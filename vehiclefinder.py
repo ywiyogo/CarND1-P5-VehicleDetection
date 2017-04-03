@@ -27,27 +27,34 @@ class VehicleFinder:
         self.heatmap = None
         self.hog_clf = None
         self.cars = {}
+        self.bboxs = []  # list of bounding box
+        self.tracking = False
+        self.heatmap_thres = 1
 
     def init_detection_algorithm(self, algorithm):
         """Initialize the object detection algorithm"""
         if algorithm.lower() == "hog":
             print("Initializing HOG classifier ...")
-            self.hog_clf = HogClassifier("HSV")
+            self.hog_clf = HogClassifier()
             self.hog_clf.init_features()
             self.hog_clf.learn_SVC_features()
 
-    def run(self, img, debug=False):
+    def run(self, img, tracking=False, debug=False):
         """Run Vehicle Finder Pipeline"""
         global DEBUG
         DEBUG = debug
+        self.tracking = tracking
         # Start top y
         y_top = 380
 
         for car in list(self.cars.values()):
             car.frame_update = False
-        if DEBUG: print("Input img: ", img.shape)
+        if DEBUG:
+            print("Input img: ", img.shape)
+            print("Tracking: ", self.tracking, " Heatmap threshold: ",
+                  self.heatmap_thres)
         win_scales = [64, 96, 128]
-        overlap = [0.75, 0.8, 0.8]
+        overlap = [0.8, 0.8, 0.8]
         allwindows = []
         #-----------------------------------
         # Start sliding windows
@@ -80,17 +87,14 @@ class VehicleFinder:
         heat = np.zeros_like(img[:, :, 0]).astype(np.float)
         # Add heat to each box in box list
         heat = add_heat(heat, allwindows)
-        #print(heat.shape)
-        #nonzeroheat = heat.ravel()[np.flatnonzero(heat)]
-        #if DEBUG: print("Max heat value: {}".format(max(nonzeroheat)))
-        # Apply threshold to help remove false positives
-        heat = apply_threshold(heat, 1)
+        #heat = apply_threshold(heat, 0)
+
         # Visualize the heatmap when displaying
         self.heatmap = np.clip(heat, 0, 255)
 
         # Find final boxes from heatmap using label function
         labels = label(self.heatmap)
-        self.filter_labels(labels)
+        self.evaluate_labels(labels)
         #print(len(labels[0]), "---", labels[1])
         #res_img = draw_labeled_bboxes(np.copy(img), labels, heatmap, vis=debug)
 
@@ -98,19 +102,25 @@ class VehicleFinder:
 
         for car in list(self.cars.values()):
             # print("carID: ", car.carID, " ", car.tracked_count, " ", car.frame_update_count)
-            if car.check_update():
+            if car.is_valid():
                 new_car_dict[car.carID] = car
         self.cars = new_car_dict
-
 
     def draw_cars(self, img):
         """Draw all car bbox on the image"""
         font = cv2.FONT_HERSHEY_SIMPLEX
         for car in list(self.cars.values()):
-            print("Draw car: carID: ", car.carID, " ",car.tracked_count, " ", car.noupdate_count)
-            if car.tracked_count > 0:
+            print("Draw car: carID: ", car.carID, " ", car.tracked_count, " ",
+                  car.noupdate_count)
+            if self.tracking:
+                if car.tracked_count > 0:
+                    cv2.rectangle(img, car.bbox[0], car.bbox[1], (0, 0, 255), 6)
+                    cv2.putText(img, str("car " + str(car.carID)),
+                                ((car.bbox[0][0], car.bbox[0][1]-5)), font, 1,
+                                (255, 255, 255), 2)
+            else:
                 cv2.rectangle(img, car.bbox[0], car.bbox[1], (0, 0, 255), 6)
-                cv2.putText(img, str("car " + str(car.carID)),
+                cv2.putText(img, str("car "),
                             ((car.bbox[0][0], car.bbox[0][1]-5)), font, 1,
                             (255, 255, 255), 2)
         if DEBUG:
@@ -124,6 +134,50 @@ class VehicleFinder:
             fig.tight_layout()
             plt.show()
         return img
+
+    def evaluate_labels(self, labels):
+        pos_bbox = []
+        if not self.tracking: self.cars = {}
+
+        for car_number in range(1, labels[1] + 1):
+            # Find pixels with each car_number label value
+            nonzero = (labels[0] == car_number).nonzero()
+            # Identify x and y values of those pixels
+            nonzeroy = np.array(nonzero[0])
+            nonzerox = np.array(nonzero[1])
+            bbox = ((np.min(nonzerox), np.min(nonzeroy)), (np.max(nonzerox), np.max(nonzeroy)))
+            subheatmap = self.heatmap[bbox[0][1]:bbox[1][1],
+                                      bbox[0][0]:bbox[1][0]]
+            flatmap = subheatmap.flatten()
+            # threshold for heatmap max
+            print("max subheatmap: ", max(flatmap))
+            if max(flatmap) > self.heatmap_thres:
+                pos_bbox.append(bbox)
+                if self.tracking:
+                    self.update_cars(bbox)
+                else:
+                    print("Create a new car: ", car_number)
+                    newcar = Car(car_number, bbox)
+                    self.cars[car_number] = newcar
+
+        self.bboxs = pos_bbox
+
+    def update_cars(self, bbox):
+        found = False
+        for car in list(self.cars.values()):
+            if car.check_bbox(bbox):
+                car.update_state(bbox)
+                found = True
+                break
+        if not found:
+            car_id = 0
+            for i in range(1, len(self.cars) + 2):
+                if not (i in self.cars.keys()):
+                    car_id = i
+                    break
+            print("Create a new car: ", car_id)
+            newcar = Car(car_id, bbox)
+            self.cars[car_id] = newcar
 
     def filter_labels(self, labels):
         """Filter the generated label from heatmap"""
@@ -184,7 +238,7 @@ class VehicleFinder:
             if prediction == 1:
         # 8) Calculate the SVC confidence score
                 c_score = clf.decision_function(test_features)
-                if c_score > 0.99:
+                if c_score > 0.7:
                     on_windows.append(window)
                     conf_score.append(c_score)
 
