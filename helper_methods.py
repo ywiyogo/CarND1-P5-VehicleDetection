@@ -11,17 +11,43 @@ from skimage.feature import hog
 
 DEBUG = 1
 
+
 def visualize_img(img, title, cmap):
     fig = plt.figure()
     plt.imshow(img)
     plt.show()
 
+
+def two_cols_vis_imgs(imgdict1, imgdict2, c_map=None):
+    """
+    Visualize images from two dictionaries in 2 columns
+    e.g.: imgdict["title string"] = img_array
+    """
+    rows = len(imgdict1)
+    f, axarr = plt.subplots(3, 2)
+    f.tight_layout()
+    f. figsize=(10, 20)
+    for idx in range(len(imgdict1)):
+        axis_r1 = axarr[idx, 0]
+        axis_r2 = axarr[idx, 1]
+        # axis_r1.set_title(list(imgdict1.keys())[idx])
+        # axis_r2.set_title(list(imgdict2.keys())[idx])
+        axis_r1.set_title("YUV Channel "+ str(idx+1))
+        axis_r2.set_title("HOG Channel"+ str(idx+1))
+        axis_r1.imshow(imgdict1[idx], cmap=c_map)
+        axis_r2.imshow(imgdict2[idx], cmap=c_map)
+        # axis_r1.imshow(list(imgdict1.values())[idx], cmap=c_map)
+        # axis_r2.imshow(list(imgdict2.values())[idx], cmap=c_map)
+    plt.show()
+
+
 def visualize_imgs(imglist, titlelist, cmaplist):
     """Visualize list of image"""
     if DEBUG:
         rows = int(len(imglist) / 2) + (len(imglist) % 2 > 0)
-        f, axarr = plt.subplots(rows, 2, figsize=(10, 8))
+        f, axarr = plt.subplots(rows, 2)
         f.tight_layout()
+        figsize=(10, 2*len(imglist))
         i = 0
         j = 0
         for idx, img in enumerate(imglist):
@@ -36,10 +62,8 @@ def visualize_imgs(imglist, titlelist, cmaplist):
                     i = i + 1
                     j = 0
             axis.set_title(titlelist[idx])
-            if cmaplist[idx] == 1:
-                axis.imshow(img, cmap="gray")
-            else:
-                axis.imshow(img)
+            if len(cmaplist) > 0:
+                axis.imshow(img, cmap=cmaplist[idx])
         plt.show()
 
 

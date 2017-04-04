@@ -78,21 +78,22 @@ def main():
     # 1. Perform a HOG feature extraction on a labeled training set of images
     # and train a classifier Linear SVM classifier
     global veh_finder
-    veh_finder = VehicleFinder()
+    veh_finder = VehicleFinder(track=True, threshold=1)
     veh_finder.init_detection_algorithm("HOG")
+
     #ffmpeg_extract_subclip("project_video.mp4", 0, 4, targetname="test3.mp4")
     if 1:
         vidfilename = "test3.mp4"
-        write_output = "test3_result.mp4"
+        write_output = "test3_result-t1-track.mp4"
         # vidfilename = "project_video.mp4"
-        # write_output = "project_video_result.mp4"
+        # write_output = "project_video_result-t1-track.mp4"
         clip = VideoFileClip(vidfilename)
         proc_clip = clip.fl_image(process_image)
         proc_clip.write_videofile(write_output, audio=False)
     else:
         # Get image from video
         file = "./test_images/test"
-        for i in range(1, 9):
+        for i in range(5, 6):
             filename = file + str(i) + ".jpg"
             rgb_img = mpimg.imread(filename)
             veh_finder.run(rgb_img, debug=True)

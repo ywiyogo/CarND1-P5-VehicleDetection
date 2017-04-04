@@ -15,11 +15,11 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/
-[image2]: ./examples/
-[image3]: ./examples/
-[image4]: ./examples/
-[image5]: ./examples/
+[image1]: ./examples/car_noncar.png
+[image2]: ./examples/car_hogimgs.png
+[image3]: ./examples/noncar_hogimgs.png
+[image4]: ./examples/slidingwindows.png
+[image5]: ./examples/swindows_heatmap.png
 [image6]: ./examples/
 [image7]: ./examples/
 [video1]: ./project_video_result.mp4
@@ -63,7 +63,7 @@ These are the first two lines of codes that have to be called first:
     self.hog_clf = HogClassifier("HSV")
     self.hog_clf.init_features()
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+Here is an example using the `YUV` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
 
 ![alt text][image2]
@@ -78,7 +78,7 @@ First, I tried the RGB color channel for the feature extraction. I combine all t
 * Binned color feature spatial: 16
 * Color histogram bins: 16
 
-After run the C-Support Vector classifier, it returns 98.23% for the test accuracy. From this result, I changed only the color space and observing the results in order to get the best color space. The table below shows my experiment result with all datasets provided by Udacity (GTI and KITTI).
+After run the C-Support Vector classifier, it returns 98.23% for the test accuracy. From this result, I changed only the color space and observing the results in order to get the best color space. The table below shows my experiment result with all datasets provided by Udacity (GTI and KITTI). The values in the SCV vector length column are generated from the `extracted_features()` function. The last column presents the accuracy value using 20% of the total datasets as test datasets.
 
 |Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy|
 |--|--|--|--|--|--|--|--|
@@ -133,7 +133,7 @@ In the class VehicleFinder, I define the window scales and the overlap scales:
 
 Windows size more than 128 x 128 pixels returns a more broaded detection on the heatmap. As the result, we will often get a larger bounding box than the object size. 
 
-Using overlap between 0.7 and 0.8 creates a higher value of heatmap. This approach results more stability of the resulting bounding box.
+Using overlap between 0.7 and 0.8 creates a higher value of heatmap. Based on my experiments, I set the overlap value to 0.8. This approach results more stability of the resulting bounding box. The below figure shows the sliding windows approach using my SVC classifier.
 
 ![alt text][image3]
 
@@ -148,7 +148,10 @@ After defining the sliding windows, I pass the windows to the classfier in order
 3. Apply a heatmap threshold of 1
 4. Create a car object for each vehicle detection
 
+The below figures visualizes the conversion from the step 1 and step 2:
+
 ![alt text][image4]
+
 ---
 
 ### Video Implementation

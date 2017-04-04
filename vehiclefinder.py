@@ -3,7 +3,7 @@ Author: Y.Wiyogo
 """
 import numpy as np
 import cv2
-from helper_methods import visualize_img
+from helper_methods import visualize_imgs, two_cols_vis_imgs
 from lesson_functions import slide_window, find_cars, add_heat
 from lesson_functions import apply_threshold, draw_labeled_bboxes, draw_boxes
 from hog_classifier import HogClassifier
@@ -22,14 +22,16 @@ class VehicleFinder:
     4. Returns the input image with the bounding boxes
     """
 
-    def __init__(self):
+    def __init__(self, track=False, threshold=2):
         """Constructor"""
         self.heatmap = None
         self.hog_clf = None
         self.cars = {}
         self.bboxs = []  # list of bounding box
-        self.tracking = False
-        self.heatmap_thres = 1
+        self.tracking = track
+        self.heatmap_thres = threshold
+        print("Tracking: ", self.tracking, " Heatmap threshold: ",
+              self.heatmap_thres)
 
     def init_detection_algorithm(self, algorithm):
         """Initialize the object detection algorithm"""
@@ -39,11 +41,10 @@ class VehicleFinder:
             self.hog_clf.init_features()
             self.hog_clf.learn_SVC_features()
 
-    def run(self, img, tracking=False, debug=False):
+    def run(self, img, debug=False):
         """Run Vehicle Finder Pipeline"""
         global DEBUG
         DEBUG = debug
-        self.tracking = tracking
         # Start top y
         y_top = 380
 
@@ -51,27 +52,32 @@ class VehicleFinder:
             car.frame_update = False
         if DEBUG:
             print("Input img: ", img.shape)
-            print("Tracking: ", self.tracking, " Heatmap threshold: ",
-                  self.heatmap_thres)
+
         win_scales = [64, 96, 128]
-        overlap = [0.8, 0.8, 0.8]
+        ybottom = [600, 680, img.shape[0]]
+        overlap = 0.8
         allwindows = []
+        if DEBUG:
+            imgs1 = {}
+            imgs2 = {}
+            imgcopy1 = np.copy(img)
+            imgcopy2 = np.copy(img)
         #-----------------------------------
         # Start sliding windows
-        for i, scl in enumerate(win_scales):
-            ybottom = y_top + int(2.5 * scl)
-
-            if (ybottom > img.shape[0]): ybottom = img.shape[0]
-            windowslist = slide_window(img, [0, img.shape[1]], [y_top, ybottom],
-                                       (scl, scl), (overlap[i], overlap[i]))
-            if 0: visualize_img(draw_boxes(img, windowslist), "Test", 0)
-
+        for i, scl in enumerate(win_scales):            
+            windowslist = slide_window(img, [0, img.shape[1]], [y_top, ybottom[i]],
+                                       (scl, scl), (overlap, overlap))
             classifier = self.hog_clf.svc
             swindows, scores = (self.search_windows(img, windowslist, classifier, self.hog_clf.scaler_feat))
 
             allwindows = swindows + allwindows
 
-            if 0: visualize_img(draw_boxes(img, swindows), "Test", 0)
+            if DEBUG:
+                imgs1["Win size " + str(win_scales[i])] = draw_boxes(imgcopy1, windowslist)
+                imgs2["Detection " + str(win_scales[i])] = draw_boxes(imgcopy2, swindows)
+
+        if DEBUG:
+            two_cols_vis_imgs(imgs1, imgs2)
         #-----------------------------------
         # HOG Subsampling
         # for scale in [1, 1.5, 2]:
@@ -92,6 +98,9 @@ class VehicleFinder:
         # Visualize the heatmap when displaying
         self.heatmap = np.clip(heat, 0, 255)
 
+        if DEBUG:
+            allwin_img = draw_boxes(np.copy(img), allwindows)
+            visualize_imgs([allwin_img, self.heatmap], ["Combined Windows", "Heatmap"], [None, "hot"])
         # Find final boxes from heatmap using label function
         labels = label(self.heatmap)
         self.evaluate_labels(labels)
@@ -110,8 +119,8 @@ class VehicleFinder:
         """Draw all car bbox on the image"""
         font = cv2.FONT_HERSHEY_SIMPLEX
         for car in list(self.cars.values()):
-            print("Draw car: carID: ", car.carID, " ", car.tracked_count, " ",
-                  car.noupdate_count)
+            #print("Draw car: carID: ", car.carID, " ", car.tracked_count, " ",
+                  #car.noupdate_count)
             if self.tracking:
                 if car.tracked_count > 0:
                     cv2.rectangle(img, car.bbox[0], car.bbox[1], (0, 0, 255), 6)
@@ -150,13 +159,13 @@ class VehicleFinder:
                                       bbox[0][0]:bbox[1][0]]
             flatmap = subheatmap.flatten()
             # threshold for heatmap max
-            print("max subheatmap: ", max(flatmap))
+            #print("max subheatmap: ", max(flatmap))
             if max(flatmap) > self.heatmap_thres:
                 pos_bbox.append(bbox)
                 if self.tracking:
                     self.update_cars(bbox)
                 else:
-                    print("Create a new car: ", car_number)
+                    #print("Create a new car: ", car_number)
                     newcar = Car(car_number, bbox)
                     self.cars[car_number] = newcar
 
