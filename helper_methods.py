@@ -18,7 +18,7 @@ def visualize_img(img, title, cmap):
     plt.show()
 
 
-def two_cols_vis_imgs(imgdict1, imgdict2, c_map=None):
+def two_cols_vis_imgs(imgdict1, imgdict2, stringkeys=False, c_map=None):
     """
     Visualize images from two dictionaries in 2 columns
     e.g.: imgdict["title string"] = img_array
@@ -26,18 +26,21 @@ def two_cols_vis_imgs(imgdict1, imgdict2, c_map=None):
     rows = len(imgdict1)
     f, axarr = plt.subplots(3, 2)
     f.tight_layout()
-    f. figsize=(10, 20)
-    for idx in range(len(imgdict1)):
+    f. figsize = (10, 20)
+    for idx, key in enumerate(list(imgdict1.keys())):
         axis_r1 = axarr[idx, 0]
         axis_r2 = axarr[idx, 1]
-        # axis_r1.set_title(list(imgdict1.keys())[idx])
-        # axis_r2.set_title(list(imgdict2.keys())[idx])
-        axis_r1.set_title("YUV Channel "+ str(idx+1))
-        axis_r2.set_title("HOG Channel"+ str(idx+1))
-        axis_r1.imshow(imgdict1[idx], cmap=c_map)
-        axis_r2.imshow(imgdict2[idx], cmap=c_map)
-        # axis_r1.imshow(list(imgdict1.values())[idx], cmap=c_map)
-        # axis_r2.imshow(list(imgdict2.values())[idx], cmap=c_map)
+        if stringkeys:
+            axis_r1.set_title(list(imgdict1.keys())[idx])
+            axis_r2.set_title(list(imgdict2.keys())[idx])
+            axis_r1.imshow(list(imgdict1.values())[idx], cmap=c_map)
+            axis_r2.imshow(list(imgdict2.values())[idx], cmap=c_map)
+        else:
+            axis_r1.set_title(str(idx))
+            axis_r2.set_title(str(idx))
+            axis_r1.imshow(imgdict1[key], cmap=c_map)
+            axis_r2.imshow(imgdict2[key], cmap=c_map)
+
     plt.show()
 
 

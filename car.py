@@ -69,6 +69,7 @@ class Car:
             if self.noupdate_count > -1:
                 return False
             else:
+                self.noupdate_count = 0
                 return True
         else:
             return True

@@ -1,4 +1,4 @@
-*.p
+data_*.p
 *.pyc
 
 p5_vehicles/

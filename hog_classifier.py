@@ -107,22 +107,19 @@ class HogClassifier:
             scaled_feature_data["scaler"] = self.scaler_feat
             print("Length scaled features: ", len(self.scaled_features))
             joblib.dump(scaled_feature_data, open(scaled_fname, "wb"))
-            # scaler_feature_data = {}
-            # scaler_feature_data["scaler"] = self.scaler_feat
-            # joblib.dump(scaler_feature_data, open(scaler_fname, "wb"))
+
 
         if self.debug:
             print("Type of feature datas: ", type(self.cars_features))
             print("Type of feature data[0]: ", type(self.cars_features[0]), self.cars_features[0].shape, " ", self.cars_features[0][10])
             print("Type of scaler data: ", type(self.scaler_feat))
             print("Type of scaled data: ", type(self.scaled_features), self.cars_features[0].shape)
-            
-            show_barplot([self.cars_features[0], self.noncars_features[0]], ["car","noncar"])
-            show_barplot(self.scaled_features[0], "Scaled Features")
-            show_barplot(self.scaler_feat.scale_, "StandardScaler")
-            show_histogram(self.noncars_features[0])
-            show_histogram(self.scaled_features)
-            show_histogram(self.scaler_feat)
+            # show_barplot([self.cars_features[0], self.noncars_features[0]], ["car","noncar"])
+            # show_barplot(self.scaled_features[0], "Scaled Features")
+            # show_barplot(self.scaler_feat.scale_, "StandardScaler")
+            # show_histogram(self.noncars_features[0])
+            # show_histogram(self.scaled_features)
+            # show_histogram(self.scaler_feat)
 
     def learn_SVC_features(self):
         """Learning from the scaled features"""
@@ -162,7 +159,7 @@ class HogClassifier:
             # write to file
             joblib.dump(self.svc, open(svc_file, "wb"))
 
-    def visualize_hog_img(self, img, hog_features):
+    def visualize_hog_features(self, img, hog_features):
         """Visualization"""
         if len(hog_features) > 0:
             # Create an array stack of feature vectors
@@ -196,7 +193,7 @@ class HogClassifier:
         # Create a list to append feature vectors to
         features = []
         # test flag for visualize the HOG images, replace 0 to nc
-        test = True if 0 else False
+        debug = True if 0 else False
         # Iterate through the list of images
         for file in img_files:
             file_features = []
@@ -219,27 +216,30 @@ class HogClassifier:
                     feature_image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
             else: feature_image = np.copy(image)
 
-            if self.spatial_feat == True:
+            if self.spatial_feat is True:
                 spatial_features = bin_spatial(feature_image, size=self.spatial_size)
                 file_features.append(spatial_features)
-                if test:
+                if debug:
                     print("Length spatial feature: ", len(spatial_features),
                           " >1: ", np.where(spatial_features > 1))
-            if self.hist_feat == True:
+            if self.hist_feat is True:
                 # Apply color_hist()
                 hist_features = color_hist(feature_image, nbins=self.histbins)
                 file_features.append(hist_features)
-                if test:
+                if debug:
                     print("Length hist feature: ", len(hist_features), " >1: ",
                           np.where(hist_features > 1))
-            if self.hog_feat == True:
+
+            # --------------------------------------------------------
+            # HOG feature extraction
+            if self.hog_feat is True:
                 # Call get_hog_features() with vis=False, feature_vec=True
                 if self.hog_channel == 'ALL':
                     hog_features = []
                     hog_imgs = {}
                     hog_references = {}
                     for channel in range(feature_image.shape[2]):
-                        if test:
+                        if debug:
                             hog_feat, hog_img = get_hog_features(feature_image[:,:,channel],
                                             self.orient, self.pix_per_cell, self.cell_per_block,
                                             vis=True, feature_vec=True)
@@ -250,19 +250,21 @@ class HogClassifier:
                                             self.orient, self.pix_per_cell, self.cell_per_block,
                                             vis=False, feature_vec=True)
                         hog_features.append(hog_feat)
-                    if test:
+                    if debug:
                         print(len(hog_references))
                         two_cols_vis_imgs(hog_references, hog_imgs, "gray")
-                        test = False
+                        debug = False
                     hog_features = np.ravel(hog_features)
                 else:
                     hog_features = get_hog_features(feature_image[:,:,self.hog_channel], self.orient,
                                 self.pix_per_cell, self.cell_per_block, vis=False, feature_vec=True)
                 # Append the new feature vector to the features list
                 file_features.append(hog_features)
-                if test: print("Length hog feature: ", len(hog_features),
+                if debug: print("Length hog feature: ", len(hog_features),
                                " >1: ", np.where(hog_features > 1))
-                test = False
+                debug = False
+                # -------------------------------------------------------
+
             features.append(np.concatenate(file_features))
         # Return list of feature vectors
         return features

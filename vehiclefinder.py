@@ -64,31 +64,19 @@ class VehicleFinder:
             imgcopy2 = np.copy(img)
         #-----------------------------------
         # Start sliding windows
-        for i, scl in enumerate(win_scales):            
-            windowslist = slide_window(img, [0, img.shape[1]], [y_top, ybottom[i]],
+        for i, scl in enumerate(win_scales):
+            windowslist = slide_window(img, [0, img.shape[1]], [y_top+i*20, ybottom[i]],
                                        (scl, scl), (overlap, overlap))
             classifier = self.hog_clf.svc
             swindows, scores = (self.search_windows(img, windowslist, classifier, self.hog_clf.scaler_feat))
-
             allwindows = swindows + allwindows
 
             if DEBUG:
-                imgs1["Win size " + str(win_scales[i])] = draw_boxes(imgcopy1, windowslist)
-                imgs2["Detection " + str(win_scales[i])] = draw_boxes(imgcopy2, swindows)
+                imgs1[scl] = draw_boxes(imgcopy1, windowslist)
+                imgs2[scl] = draw_boxes(imgcopy2, swindows)
 
         if DEBUG:
             two_cols_vis_imgs(imgs1, imgs2)
-        #-----------------------------------
-        # HOG Subsampling
-        # for scale in [1, 1.5, 2]:
-        #     windows = find_cars(img, y_top, 656, self.hog_clf.color_space, scale, self.hog_clf.svc,
-        #                    self.hog_clf.scaler_feat, self.hog_clf.orient,
-        #                    self.hog_clf.pix_per_cell, self.hog_clf.cell_per_block,
-        #                    self.hog_clf.spatial_size, self.hog_clf.histbins)
-        #     # Add the car bbox to allwindows
-        #     for car in list(self.cars.values()):
-        #         allwindows = allwindows + [car.bbox]
-        # -------------------------------------------------
 
         heat = np.zeros_like(img[:, :, 0]).astype(np.float)
         # Add heat to each box in box list
@@ -107,8 +95,8 @@ class VehicleFinder:
         #print(len(labels[0]), "---", labels[1])
         #res_img = draw_labeled_bboxes(np.copy(img), labels, heatmap, vis=debug)
 
+        # Filtering cars which is not up-to-date
         new_car_dict = {}
-
         for car in list(self.cars.values()):
             # print("carID: ", car.carID, " ", car.tracked_count, " ", car.frame_update_count)
             if car.is_valid():
@@ -119,8 +107,6 @@ class VehicleFinder:
         """Draw all car bbox on the image"""
         font = cv2.FONT_HERSHEY_SIMPLEX
         for car in list(self.cars.values()):
-            #print("Draw car: carID: ", car.carID, " ", car.tracked_count, " ",
-                  #car.noupdate_count)
             if self.tracking:
                 if car.tracked_count > 0:
                     cv2.rectangle(img, car.bbox[0], car.bbox[1], (0, 0, 255), 6)
