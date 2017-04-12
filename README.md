@@ -92,24 +92,24 @@ First, I tried the RGB color channel for the feature extraction. I combine all t
 
 After run the C-Support Vector classifier, it returns 98.23% for the test accuracy. From this result, I changed only the color space and observing the results in order to get the best color space. The table below shows my experiment result with all datasets provided by Udacity (GTI and KITTI). The values in the SCV vector length column are generated from the `extracted_features()` function. The last column presents the accuracy value using 20% of the total datasets as test datasets.
 
-Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy
---|--|--|--|--|--|--|--
-RGB|8|16|16|16|1680|98.23%
-<div style="background-color:yellow;">HSV</div>|8|16|16|16|1680|<div style="background-color:yellow;">99.16%</div>
-YCrCb|8|16|16|16|1680|98.99%
-<div style="background-color:yellow;">YUV</div>|8|16|16|16|1680|<div style="background-color:yellow;">99.01%</div>
+|Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy|
+| --- | --- | --- | --- | --- | --- | --- | --- |
+|RGB|8|16|16|16|1680|98.23%|
+|<div style="background-color:yellow;">HSV</div>|8|16|16|16|1680|<div style="background-color:yellow;">99.16%</div>|
+|YCrCb|8|16|16|16|1680|98.99%|
+|<div style="background-color:yellow;">YUV</div>|8|16|16|16|1680|<div style="background-color:yellow;">99.01%</div>|
 
 The comparison places HSV and YUV as my favorite color spaces to be used, compared to RGB. I continued my experiment by tuning the other parameter values, and get these comparisons:
 
-Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy
---|--|--|--|--|--|--|--
-YUV|8|16|16|16|1680|99.01%
-YUV|8|16|16|8|5520|99.32%
-YUV|12|16|16|8|7872|99.47%
-YUV|8|32|32|8|7872|99.55%
-YUV|8|32|32|16|4032|99.13%
-HSV|8|32|32|16|4032|99.21%
-YUV|12|32|32|16|4464|99.52%
+|Color|Orient|Spatial|Hist Bins|pix per cell|SVC vec.length|Accuracy|
+| --- | --- | --- | --- | --- | --- | --- | --- |
+|YUV|8|16|16|16|1680|99.01%|
+|YUV|8|16|16|8|5520|99.32%|
+|YUV|12|16|16|8|7872|99.47%|
+|YUV|8|32|32|8|7872|99.55%|
+|YUV|8|32|32|16|4032|99.13%|
+|HSV|8|32|32|16|4032|99.21%|
+|YUV|12|32|32|16|4464|99.52%|
 
 Based on the above table, the pixel per cell 8 returns the higher accuracy. However, it consumes a lot of memory (with vector length 7872). Spatial size 32 returns a better accuracy than 16, since decompressing the original image from 64x64 to 16x16 will lose a lot of information of images.
 
